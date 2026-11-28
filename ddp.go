@@ -973,6 +973,21 @@ func (c *Client) hydrateState(ctx context.Context) error {
 	c.cache.hydrateRoomsAndSubs(roomsResp.Update, subsResp.Update)
 	c.seedUsersFromRooms(roomsResp.Update)
 
+	c.logger.Infof("found our server %s (user: %s)", c.httpURL, c.UserID())
+
+	var joinedChannels, directMessages int
+
+	for i := range roomsResp.Update {
+		if roomsResp.Update[i].Type == RoomTypeDirect {
+			directMessages++
+		} else {
+			joinedChannels++
+		}
+	}
+
+	c.logger.Infof("found %d channels for user (%d channels, %d DMs/GMs)",
+		joinedChannels+directMessages, joinedChannels, directMessages)
+
 	return nil
 }
 
@@ -1018,7 +1033,7 @@ func (c *Client) prefetchUsers(ctx context.Context) {
 		if len(usersResp.Users) == 0 ||
 			(usersResp.Total > 0 && loaded >= usersResp.Total) ||
 			(usersResp.Total == 0 && len(usersResp.Users) < userListPageLimit) {
-			c.logger.Debugf("users.list prefetched %d user(s)", loaded)
+			c.logger.Infof("found %d users", loaded)
 
 			return
 		}
